@@ -313,6 +313,9 @@ render();
 }
 
 document.addEventListener('change',e=>{if(!e.target.matches('[data-restore]'))return;const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);if(o.app!=='georgia-life')throw 0;if(!confirm('Replace what is on this phone with the backup from '+String(o.exported).slice(0,10)+'?'))return;Object.keys(o).forEach(k=>{if(k!=='app'&&k!=='exported'&&o[k]!==null)S.set(k,o[k])});location.reload()}catch(err){alert("That file doesn't look like a My Life backup.")}})});
+
+try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')}catch(e){}
+let wasOff=!navigator.onLine;addEventListener('offline',()=>{wasOff=true});addEventListener('online',()=>{if(wasOff){wasOff=false;setTimeout(()=>location.reload(),1500)}});
 </script>
 </body>
 </html>
