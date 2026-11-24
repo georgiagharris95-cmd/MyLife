@@ -268,7 +268,7 @@ return `<button class="back" data-tab="more">‹ Back</button><h1>History &amp; 
 <section class="card"><h2>Medications</h2>${days.length?days.slice(0,60).map(d=>`<div class="between"><span class="sm" style="font-weight:700">${fmt(new Date(d+'T00:00'))}</span><span class="sm">${Object.keys(log[d]).filter(i=>log[d][i]).map(i=>(MEDS.find(m=>m.id===i)||{n:i}).n.split(' ')[0]).join(', ')}</span></div>`).join(''):'<p class="mut">Nothing ticked yet.</p>'}${prn.length?`<p class="sm" style="font-weight:700;margin-top:8px">Tirzepatide doses</p>${prn.slice().reverse().map(x=>`<p class="sm">${esc(String(x).slice(0,16).replace('T',' '))}</p>`).join('')}`:''}</section>
 <section class="card"><h2>Period starts</h2>${cycle.slice().reverse().map(d=>`<p class="sm">${fmt(new Date(d+'T00:00'))} ${new Date(d).getFullYear()}</p>`).join('')}</section>
 <section class="card"><h2>Other</h2><p class="sm">Odometer: ${odo?esc(odo)+' km':'not logged'}</p><p class="sm">Receipts saved: ${receipts.length}</p><p class="sm">To-dos done: ${todos.filter(t=>t.done).length}</p></section>
-<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p>`}
+<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 24 Nov, 2:30pm</p>`}
 
 const VIEWS={hist:vHist,today:vToday,cal:vCal,health:vHealth,todo:vTodo,more:vMore,swing:vSwing,study:vStudy,car:vCar,nums:vNums,deliv:vDeliv,rec:vRec,money:vMoney};
 const TABS=[['today','Today','home'],['cal','Calendar','cal'],['health','Health','heart'],['todo','To-do','list'],['more','More','more']];
