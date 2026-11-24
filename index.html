@@ -79,7 +79,7 @@ const diff=(a,b)=>Math.round((day0(b)-day0(a))/864e5);
 const now=new Date(),today=day0(now);
 // Roster: 8 on / 6 off, Tue to Tue, first swing starts Tue 17 Nov 2026
 const ANCHOR=D(2026,11,17);
-const rpos=d=>((diff(ANCHOR,d)%14)+14)%14;const BREAKS=[['2026-12-23','2027-01-11']];const onBreak=d=>BREAKS.some(([a,b])=>key(d)>=a&&key(d)<=b);const onSwing=d=>diff(ANCHOR,d)>=0&&rpos(d)<8&&!onBreak(d);
+const rpos=d=>((diff(ANCHOR,d)%14)+14)%14;const BREAKS=[['2026-12-22','2027-01-11']];const onBreak=d=>BREAKS.some(([a,b])=>key(d)>=a&&key(d)<=b);const onSwing=d=>diff(ANCHOR,d)>=0&&rpos(d)<8&&!onBreak(d);
 const nextStart=d=>{let x=day0(d);while(!(rpos(x)===0&&diff(ANCHOR,x)>=0)||diff(d,x)<=0)x=addD(x,1);return x};
 const rrBlock=d=>{const s=addD(d,7-rpos(d));return [s,addD(s,7)]};
 const travel=d=>diff(ANCHOR,d)>=0&&(rpos(d)===0||rpos(d)===7)&&!onBreak(d);
