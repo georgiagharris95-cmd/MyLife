@@ -80,12 +80,11 @@ const now=new Date(),today=day0(now);
 // Roster: 8 on / 6 off, Tue to Tue, first swing starts Tue 17 Nov 2026
 const ANCHOR=D(2026,11,17);
 const rpos=d=>((diff(ANCHOR,d)%14)+14)%14;const BREAKS=[['2026-12-22','2027-01-11']];const onBreak=d=>BREAKS.some(([a,b])=>key(d)>=a&&key(d)<=b);const onSwing=d=>diff(ANCHOR,d)>=0&&rpos(d)<8&&!onBreak(d);
-const nextStart=d=>{let x=day0(d);while(!(rpos(x)===0&&diff(ANCHOR,x)>=0)||diff(d,x)<=0)x=addD(x,1);return x};
+const nextStart=d=>{let x=day0(d);while(!(rpos(x)===0&&diff(ANCHOR,x)>=0&&!onBreak(x))||diff(d,x)<=0)x=addD(x,1);return x};
 const rrBlock=d=>{const s=addD(d,7-rpos(d));return [s,addD(s,7)]};
 const travel=d=>diff(ANCHOR,d)>=0&&(rpos(d)===0||rpos(d)===7)&&!onBreak(d);
 // Events
-const EV=[
-{d:D(2026,11,26),t:'2:00pm',n:'Physio · Pain Options',w:'Unit 1/7 Hardy St, South Perth',c:'var(--pink)',tel:'08 9367 2300',note:'Cancel 24 hrs ahead or 50% fee'},
+/*EV-START*/const EV=[
 {d:D(2026,11,28),t:'6:30pm',n:'Ben Morgan gig',w:'Old Customs House, Fremantle',c:'var(--pink)'},
 {d:D(2026,11,30),t:'1:00pm',n:'Ear Science · Prof Gluth',w:'1 Salvado Rd, Subiaco',c:'var(--pink)',tel:'08 6166 3767',pending:'ear'},
 {d:D(2026,12,15),t:'',n:'BSBTWK502 + BSBPMG532 Assess 1 due',w:'Done, just upload',c:'var(--violet)'},
@@ -95,7 +94,7 @@ const EV=[
 {d:D(2027,3,15),t:'',n:'BSBPMG534 + 535 Assess 2 due',w:'TAFE · you\'re away',c:'var(--violet)'},
 {d:D(2027,3,20),t:'',n:'BSBPMG530 · 531 · 532 · 536 Assess 2 due',w:'TAFE · you\'re away',c:'var(--violet)'},
 {d:D(2027,3,22),t:'',n:'BSBPMG533 + 537 Assess 2 due',w:'TAFE · you\'re away',c:'var(--violet)'},
-{d:D(2027,7,2),t:'',n:'Car rego due',w:'Renew online with DoT',c:'var(--mint)'}];
+{d:D(2027,7,2),t:'',n:'Car rego due',w:'Renew online with DoT',c:'var(--mint)'}];/*EV-END*/
 EV.forEach(e=>e.n=e.n.replace(' ✈',''));
 const evOn=d=>EV.filter(e=>key(e.d)===key(d));
 // Meds
@@ -134,7 +133,6 @@ const telA=(n,c='var(--mintL)')=>`<a href="tel:${n.replace(/\s/g,'')}" aria-labe
 /*MAIL-START*/const MAIL={updated:'24 Nov, 1:30pm',items:[
 {id:'1a20bf508e3040ed',from:'Workforce Australia',t:'First provider appointment, Mon 7 Dec',l:"WISE Employment Byford. It says you must attend, but 7 Dec is on swing, so you'll likely need to reschedule.",url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1882714996944683245'},
 {id:'1a1e1f58fa3919b1',from:'Definitiv · Emma Fletcher',t:'Timesheet rejected (4 Nov)',l:'She wants notes added on what activities you were doing that day.',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1881976161303075249'},
-{id:'1a20b67dee7c5ed5',from:'Pain Options',t:'Physio reminder, Thu 26 Nov 2pm',l:'Stephen Ranford. Needs 24 hours notice to change.',tel:'08 9367 2300',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1882705296229162709'},
 {id:'1a1e78495c6ad0c2',from:'Forrest Road Medical',t:'Reminder letter from Dr Stanakzai',l:'PDF needs a PIN to open. Might be your pap smear recall.',tel:'08 9402 1922',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1882073950765895874'},
 {id:'1a1ebe6f67585f04',from:'RAC Insurance',t:'Car insurance renewed',l:'Debit amount $174.02.',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1882151079971938052'},
 {id:'1a1e1953503f3671',from:'Synergy',t:'New power bill',l:'Open it to check the amount and due date.',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1881969539906745969'},
@@ -143,6 +141,43 @@ const telA=(n,c='var(--mintL)')=>`<a href="tel:${n.replace(/\s/g,'')}" aria-labe
 let seen=S.get('seen',{});
 function mailCard(){const n=MAIL.items.filter(m=>!seen[m.id]);if(!n.length)return '';
 return `<section class="card" style="background:var(--skyL)"><div class="between"><h2>Heads up · ${n.length}</h2><span class="mut sm">Checked ${MAIL.updated}</span></div>${n.map(m=>`<div class="row" style="align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)"><div class="grow"><p class="sm mut">${esc(m.from)}</p><p style="font-weight:700">${esc(m.t)}</p><p class="sm">${esc(m.l)}</p><div class="row" style="gap:8px;margin-top:6px">${m.url&&m.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${m.url}">Open email</a>`:''}${m.tel?telA(m.tel,'var(--card)'):''}</div></div><button class="btn" style="flex:none" data-seen="${esc(m.id)}" aria-label="Mark as seen">✓</button></div>`).join('')}</section>`}
+/*BILLS-START*/const BILLS=[
+{id:'synergy-nov',n:'Synergy power bill',due:'',amt:'',note:'Arrived 16 Nov. Open the email for the amount and due date.'},
+{id:'rac-2026',n:'RAC car insurance',due:'',amt:'$174.02',note:'Renewed, direct debit.',paid:true},
+{id:'rego-2027',n:'Car rego',due:'2027-07-02',amt:'',note:'Renew online with DoT.'}
+];/*BILLS-END*/
+/*DOCS-START*/const DOCS=[
+{id:'1a1ed928232dd0af',k:'Pay',n:'Payslip 2–15 Nov',d:'2026-11-18',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1881987'},
+{id:'1a1e1f58fa3919b1',k:'Work',n:'Timesheet rejected (4 Nov) · add activity notes',d:'2026-11-16',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1881976161303075249'},
+{id:'1a20ae166b7c76c7',k:'Study',n:'TAFE end of semester results',d:'2026-11-24',url:''},
+{id:'1a20bf508e3040ed',k:'Government',n:'Workforce Australia · first appointment 7 Dec',d:'2026-11-24',url:'https://mail.google.com/mail/?authuser=georgiagharris95@gmail.com#all/thread-f:1882714996944683245'}
+];/*DOCS-END*/
+let replies=S.get('replies',[]),energy=S.get('energy',{}),wo=S.get('wo',{}),meals=S.get('meals',{plan:[],shop:[]}),rest=S.get('rest',{}),paidB=S.get('paidB',{});
+const save2=()=>{S.set('replies',replies);S.set('energy',energy);S.set('wo',wo);S.set('meals',meals);S.set('rest',rest);S.set('paidB',paidB)};
+const WOT=[['Upper','💪'],['Lower','🦵'],['Push','➡️'],['Pull','⬅️'],['Cardio','❤️'],['Walk','🚶‍♀️'],['Cycle','🚲']];
+const autoReplies=()=>MAIL.items.filter(m=>m.reply&&!seen['r_'+m.id]).map(m=>({id:'r_'+m.id,who:m.from,via:'Email',note:m.t,draft:m.draft||'',url:m.url,auto:1}));
+const waiting=()=>[...autoReplies(),...replies.filter(r=>!r.done)];
+const relaxed=()=>!onSwing(today)||now.getHours()>=18||travel(today);
+function askBar(){return `<form class="card" data-form="ask" style="flex-direction:row;align-items:center;gap:8px;padding:10px 12px;background:var(--violetL)"><input class="inp" name="q" placeholder="Ask Claude… e.g. cancel physio Thursday" aria-label="Ask Claude" style="flex:1"><button class="btn" aria-label="Send to Claude">Ask</button></form>`}
+function bedCard(){const h=now.getHours();const tmr=addD(today,1);if(!(h>=20&&(onSwing(tmr)||onSwing(today)&&!(rpos(today)===7))))return '';return `<section class="card" style="background:var(--violetL)"><h2>Time to wind down 🌙</h2><p class="sm">Alarm's at 4:50am. Lights out by 9:30 gets you about 7 hours. Phone down, the people stuff can wait till tomorrow.</p></section>`}
+function replyCard(){const w=waiting();if(!w.length||!relaxed())return '';return `<section class="card" style="background:var(--sunL)"><div class="between"><h2>People waiting · ${w.length}</h2><button class="back" data-go="replies">See all</button></div><p class="sm mut">No rush. Pick one, send a quick line, done.</p>${w.slice(0,3).map(r=>`<p class="sm"><b>${esc(r.who)}</b> · ${esc(r.via)}</p>`).join('')}</section>`}
+function prepCard(){if(onSwing(today))return '';const n=nextStart(today);const dd=diff(today,n);if(dd<0||dd>2)return '';const[a,b]=[n,addD(n,7)];const miss=EV.filter(e=>diff(a,e.d)>=0&&diff(e.d,b)>=0);const pc=PACK.filter(p=>packed[p]).length;
+return `<section class="card" style="background:var(--coralL)"><h2>Swing in ${dd===0?'today':dd===1?'1 day':dd+' days'}</h2><p class="sm">Packing: <b>${pc} of ${PACK.length}</b> done. Pack 8 days of every med in your stack.</p>${miss.length?`<p class="sm"><b>Clashes while you're away:</b> ${miss.map(e=>esc(e.n)+' ('+fmt(e.d)+')').join(', ')}. Worth rescheduling now.</p>`:'<p class="sm">No appointments clash with this swing.</p>'}<button class="btn ghost" data-go="swing">Open packing list</button></section>`}
+const billDue=b=>b.due?diff(today,new Date(b.due+'T00:00')):null;
+function billCard(){const soon=BILLS.filter(b=>!b.paid&&!paidB[b.id]&&(billDue(b)===null||billDue(b)<=14));if(!soon.length)return '';return `<section class="card"><div class="between"><h2>Bills due soon</h2><button class="back" data-go="bills">All bills</button></div>${soon.map(b=>`<p class="sm"><b>${esc(b.n)}</b>${b.amt?' · '+esc(b.amt):''}${b.due?' · due '+fmt(new Date(b.due+'T00:00')):''}</p>`).join('')}</section>`}
+const back='<button class="back" data-tab="more">‹ Back</button>';
+function vReplies(){const w=waiting();return `${back}<h1>People waiting</h1><p class="mut">A reply doesn't have to be long. "Hey! Sorry I went quiet, swing life. Still keen to catch up?" counts.</p>
+<form class="card" data-form="reply"><h2>Add someone</h2><input class="inp" name="who" placeholder="Who? e.g. Sam" required aria-label="Who"><select class="inp" name="via" aria-label="Where"><option>Text</option><option>Instagram</option><option>Facebook</option><option>WhatsApp</option><option>Email</option><option>Call back</option></select><input class="inp" name="note" placeholder="What about? (optional)" aria-label="About"><button class="btn">Add</button></form>
+${w.length?w.map(r=>`<section class="card"><div class="between"><div><p style="font-weight:700">${esc(r.who)}</p><p class="sm mut">${esc(r.via)}${r.note?' · '+esc(r.note):''}</p></div><button class="btn" data-replied="${esc(String(r.id))}" aria-label="Replied">✓</button></div>${r.draft?`<p class="sm" style="background:var(--card);padding:10px;border-radius:12px">${esc(r.draft)}</p>`:''}${r.url&&r.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${r.url}">Open email</a>`:''}</section>`).join(''):'<section class="card"><p>All caught up 🙌</p></section>'}`}
+function vBills(){return `${back}<h1>Bills &amp; renewals</h1>${BILLS.map(b=>{const pd=b.paid||paidB[b.id];return `<section class="card"><div class="between"><div><p style="font-weight:700" class="${pd?'done-txt':''}">${esc(b.n)}</p><p class="sm mut">${b.amt?esc(b.amt)+' · ':''}${b.due?'due '+fmt(new Date(b.due+'T00:00'),{day:'numeric',month:'short',year:'numeric'}):'date in email'}</p><p class="sm">${esc(b.note||'')}</p></div>${pd?'<span class="chip" style="background:var(--mintL)">Paid</span>':`<button class="btn ghost" data-paid="${esc(b.id)}">Paid</button>`}</div></section>`}).join('')}<p class="mut sm">New bills from your emails get added here automatically.</p>`}
+function vDocs(){const g=[...new Set(DOCS.map(d=>d.k))];return `${back}<h1>Paperwork</h1>${g.map(k=>`<section class="card"><h2>${esc(k)}</h2>${DOCS.filter(d=>d.k===k).map(d=>`<div class="between"><p class="sm">${esc(d.n)}<br><span class="mut">${fmt(new Date(d.d+'T00:00'))}</span></p>${d.url&&d.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${d.url}">Open</a>`:''}</div>`).join('')}</section>`).join('')}<p class="mut sm">Payslips, work, TAFE and government emails get filed here automatically.</p>`}
+function vWo(){const days=[];for(let i=0;i<14;i++)days.push(addD(today,-i));const wk=days.slice(0,7).filter(d=>(wo[key(d)]||[]).length).length;const k=key(today),t=wo[k]||[];
+return `${back}<h1>Workouts</h1><section class="card"><div class="between"><h2>Today</h2><span class="chip" style="background:var(--mintL)">${wk} this week</span></div><div class="row" style="flex-wrap:wrap;gap:8px">${WOT.map(([n,e])=>`<button class="btn ${t.includes(n)?'':'ghost'}" data-wo="${n}">${e} ${n}</button>`).join('')}</div></section>
+<section class="card"><h2>Last 2 weeks</h2>${days.map(d=>{const x=wo[key(d)]||[];return `<div class="between sm"><span style="font-weight:700">${fmt(d,{weekday:'short',day:'numeric',month:'short'})}</span><span>${x.length?x.map(n=>WOT.find(w=>w[0]===n)[1]+' '+n).join(', '):'<span class="mut">rest</span>'}</span></div>`}).join('')}</section>`}
+function vMeals(){const L=(k,ph)=>`${meals[k].map((x,i)=>`<label class="check"><input type="checkbox" data-meal="${k}:${i}" ${x.d?'checked':''}><span class="${x.d?'done-txt':''}">${esc(x.t)}</span></label>`).join('')}<form class="row" data-form="meal" data-k="${k}"><input class="inp" name="t" placeholder="${ph}" aria-label="${ph}"><button class="btn sun" aria-label="Add">${ic('plus')}</button></form>`;
+return `${back}<h1>Meal prep</h1><p class="mut">Cook once on R&amp;R, eat well all week.</p><section class="card"><h2>What I'm prepping</h2>${L('plan','e.g. chicken burrito bowls x5')}</section><section class="card"><h2>Shopping list</h2>${L('shop','e.g. rice, chicken thighs')}</section><button class="btn ghost" data-act="mealclear">Clear ticked items</button>`}
+function energyCard(){const k=key(today),v=energy[k];const last=[];for(let i=13;i>=0;i--){const d=addD(today,-i);last.push([d,energy[key(d)]])}
+return `<section class="card"><div class="between"><h2>Battery</h2><span class="mut sm">Only if you feel like it</span></div><div class="row" style="gap:6px">${['🪫','😮‍💨','😐','🙂','🔋'].map((e,i)=>`<button class="btn ${v===i+1?'':'ghost'}" style="flex:1;padding:8px 0" data-en="${i+1}" aria-label="Energy ${i+1}">${e}</button>`).join('')}</div><div class="row" style="gap:3px;margin-top:6px">${last.map(([d,x])=>`<span title="${fmt(d)}" style="flex:1;height:${x?8+x*6:6}px;border-radius:4px;align-self:flex-end;background:${x?(onSwing(d)?'#A9D3F2':'#B9E8A8'):'var(--line)'}"></span>`).join('')}</div><p class="mut sm">Last 2 weeks. Blue = swing, green = R&amp;R.</p></section>`}
 /*WX-START*/const WX={updated:'23 Nov, from the Bureau of Meteorology',
 sp:{n:'South Perth',d:{'2026-11-23':[22,13,20,11],'2026-11-24':[23,12,30,11],'2026-11-25':[24,12,5,11],'2026-11-26':[25,13,0,11],'2026-11-27':[26,13,5,null],'2026-11-28':[29,14,0,null],'2026-11-29':[33,17,0,null],'2026-11-30':[33.5,18.1,10,null]}},
 site:{n:'Parron · Cervantes',d:{'2026-11-23':[23,12,20,null],'2026-11-24':[22,11,10,12],'2026-11-25':[24,13,10,11],'2026-11-26':[26,13,0,11],'2026-11-27':[25,14,0,null],'2026-11-28':[29,14,0,null],'2026-11-29':[37,17,0,null],'2026-11-30':[32.4,18.8,10,null]}}};/*WX-END*/
@@ -168,14 +203,14 @@ function vToday(){
   const h=now.getHours(),g=h<12?'Morning':h<17?'Afternoon':'Evening';const open=todos.filter(t=>!t.done);
   const taken=MEDS.filter(m=>dueOn(m,today)&&log[key(today)]?.[m.id]).length,due=MEDS.filter(m=>dueOn(m,today)).length;
   return `<header class="between"><div><p class="mut">${fmt(today,{weekday:'long',day:'numeric',month:'long'})}</p><h1>${g}, Georgia</h1></div></header>
-  ${mailCard()}${swingCard()}
+  ${askBar()}${bedCard()}${mailCard()}${prepCard()}${swingCard()}${replyCard()}${billCard()}
   ${wxCard()}
   ${!ear&&diff(today,D(2026,11,30))>=0?`<section class="card" style="background:var(--sunL)"><div class="row">${ic('mail')}<div class="grow"><p style="font-weight:700">Ear Science asked if you can do Mon 30 Nov, 1pm</p><p class="sm">They tried calling. 08 6166 3767</p></div></div><div class="row" style="flex-wrap:wrap"><a class="btn" href="tel:0861663767">${ic('phone')}Call them</a><button class="btn ghost" data-act="ear">I've confirmed</button></div></section>`:''}
   <section class="card"><div class="between"><h2>Morning meds</h2><span class="chip" style="background:${taken===due?'var(--mintL)':'var(--pinkL)'}">${taken} of ${due} taken</span></div>${medRows(today)}<button class="btn ghost" data-tab="health">Tirzepatide · ${lastPrn().replace('Last dose: ','last ')}</button></section>
   <section class="card"><div class="between"><h2>To-do</h2><button class="back" data-tab="todo">See all ${open.length}</button></div>${open.slice(0,3).map(todoRow).join('')}
   <form class="row" data-form="dump"><input class="inp" name="t" placeholder="Brain dump: anything on your mind" aria-label="Quick add a to-do"><button class="btn sun" aria-label="Add">${ic('plus')}</button></form></section>
   <section class="card"><div class="between"><h2>Coming up</h2><button class="back" data-tab="cal">Calendar</button></div>${upcoming(4).map(evRow).join('')}</section>`}
-function tiles(){return [['swing','Swing & R&R','Packing list, R&R planner','var(--coralL)','bag'],['study','Study',`${UNITS.filter(u=>u[2]==='done'||u[4]==='done').length} ready to upload`,'var(--violetL)','book'],['car','Car','Service due · rego Jul 2027','var(--mintL)','car'],['nums','My Places','Addresses & numbers','var(--skyL)','phone'],['deliv','Deliveries','From your order emails','var(--sunL)','box'],['rec','Tax receipts',`${receipts.length} saved`,'var(--pinkL)','receipt'],['money','Finances','Budget, goals, house','var(--mintL)','money'],['hist','History & export','See everything, save a copy','var(--violetL)','book']].map(([k,t,s,c,i])=>`<button class="tile" style="background:${c};color:var(--ink)" data-go="${k}">${ic(i)}<b>${t}</b><span class="sm">${s}</span></button>`)}
+function tiles(){return [['swing','Swing & R&R','Packing list, R&R planner','var(--coralL)','bag'],['study','Study',`${UNITS.filter(u=>u[2]==='done'||u[4]==='done').length} ready to upload`,'var(--violetL)','book'],['car','Car','Service due · rego Jul 2027','var(--mintL)','car'],['nums','My Places','Addresses & numbers','var(--skyL)','phone'],['deliv','Deliveries','From your order emails','var(--sunL)','box'],['rec','Tax receipts',`${receipts.length} saved`,'var(--pinkL)','receipt'],['money','Finances','Budget, goals, house','var(--mintL)','money'],['replies','People waiting',`${waiting().length} to reply to`,'var(--sunL)','phone'],['wo','Workouts','Log what you did','var(--mintL)','heart'],['meals','Meal prep','Plan + shopping list','var(--coralL)','list'],['bills','Bills','Due soon & renewals','var(--skyL)','money'],['docs','Paperwork','Payslips, work, TAFE','var(--violetL)','receipt'],['hist','History & export','See everything, save a copy','var(--violetL)','book']].map(([k,t,s,c,i])=>`<button class="tile" style="background:${c};color:var(--ink)" data-go="${k}">${ic(i)}<b>${t}</b><span class="sm">${s}</span></button>`)}
 function vCal(){
   const[y,m]=calM;const first=new Date(y,m,1),off=(first.getDay()+6)%7,n=new Date(y,m+1,0).getDate();
   let cells=['M','T','W','T','F','S','S'].map(x=>`<span class="mut sm" style="font-weight:700">${x}</span>`).join('')+'<span></span>'.repeat(off);
@@ -196,7 +231,7 @@ function vHealth(){
   <section class="card" style="background:var(--violetL)"><div class="row"><div class="grow"><h3>Tirzepatide · 3 mg as needed</h3><p class="sm">${lastPrn()}</p></div></div><button class="btn" data-act="prn">Log a dose</button></section>
   <section class="card"><h2>Your stack</h2>${MEDS.map(m=>`<div class="row"><span class="dot" style="background:${m.c};height:40px;width:6px;border-radius:3px"></span><div class="grow"><p style="font-weight:700">${m.n}${m.sub?` <span class="mut sm">(${m.sub})</span>`:''}</p><p class="mut sm">${m.dose} · ${m.when==='daily'?'every day':m.when==='weekdays'?'Mon–Fri':'as needed'}${m.when!=='asneeded'?' · when you wake up':''}</p></div><span class="sm" style="font-weight:700">${m.when==='asneeded'?prn.length+' logged':adherence(m)}</span></div>`).join('')}</section>
   <section class="card"><div class="between"><h2>Last 7 days</h2></div>${MEDS.filter(m=>m.when!=='asneeded').map(m=>`<div class="row"><p class="sm grow" style="font-weight:700">${m.n.split(' ')[0]}</p><div class="row" style="gap:5px">${[6,5,4,3,2,1,0].map(i=>{const d=addD(today,-i);const due=dueOn(m,d),t=log[key(d)]?.[m.id];return `<span title="${fmt(d)}" style="width:22px;height:22px;border-radius:7px;background:${t?m.c:due?'var(--line)':'transparent'};border:${due?'0':'2px dashed var(--line)'}"></span>`}).join('')}</div></div>`).join('')}<p class="mut sm">Handy to show your doctor at your next review.</p></section>
-  <section class="card"><h2>Cycle</h2>${cyc||'<p class="mut">Log the first day of your last period to start.</p>'}<form class="row" data-form="cycle"><input class="inp" type="date" name="d" value="${key(today)}" aria-label="Period start date"><button class="btn" style="background:var(--pink);color:#241B3A">Log start</button></form></section>`}
+  ${energyCard()}<section class="card"><h2>Cycle</h2>${cyc||'<p class="mut">Log the first day of your last period to start.</p>'}<form class="row" data-form="cycle"><input class="inp" type="date" name="d" value="${key(today)}" aria-label="Period start date"><button class="btn" style="background:var(--pink);color:#241B3A">Log start</button></form></section>`}
 function todoRow(t){return `<div class="row"><label class="check grow"><input type="checkbox" data-todo="${t.id}" ${t.done?'checked':''}><span><span class="${t.done?'done-txt':''}" style="font-weight:500">${esc(t.t)}</span>${t.s?`<br><span class="mut sm">${esc(t.s)}</span>`:''}${t.tel?`<br><span class="mut sm">${t.tel}</span>`:''}</span></label>${t.tel&&!t.done?telA(t.tel,'var(--sunL)'):''}</div>`}
 function vTodo(){
   const groups=[...new Set(todos.map(t=>t.g))];const col={Calls:'var(--sunL)',Study:'var(--violetL)',Car:'var(--mintL)',Trips:'var(--skyL)','Brain dump':'var(--pinkL)'};
@@ -208,7 +243,10 @@ function vMore(){return `<h1>Everything else</h1><div class="grid2">${tiles().jo
 function vSwing(){
   const on=onSwing(today);const n=nextStart(today);const[a,b]=on?rrBlock(today):[today,nextStart(today)];
   const booked=EV.filter(e=>diff(a,e.d)>=0&&diff(e.d,b)>=0);const pc=PACK.filter(p=>packed[p]).length;
-  return `<button class="back" data-tab="more">‹ Back</button><h1>Swing &amp; R&amp;R</h1>${swingCard()}
+  const rrDays=[];{let x=on?addD(rrBlock(today)[0],1):addD(today,0);for(let i=0;i<14&&rrDays.length<6;i++,x=addD(x,1)){if(!onSwing(x)||travel(x)){if(!travel(x))rrDays.push(x)}else if(rrDays.length)break}}
+  const busy=d=>EV.filter(e=>key(e.d)===key(d)).length;const restN=rrDays.filter(d=>rest[key(d)]).length;
+  const guardHtml=rrDays.length?`<section class="card" style="background:var(--mintL)"><h2>Protect your downtime</h2><p class="sm">${restN?`You've kept ${restN} day${restN>1?'s':''} free. Nice.`:"No rest day yet. Pick one and keep it empty, painting allowed."}</p>${rrDays.map(d=>{const n=busy(d),r=rest[key(d)];return `<div class="between sm" style="padding:4px 0"><span><b>${fmt(d,{weekday:'short',day:'numeric'})}</b> · ${n?n+' thing'+(n>1?'s':'')+' booked':'free'}${n>=2?' <b style="color:var(--coral)">· a lot</b>':''}</span><button class="btn ${r?'':'ghost'} sm" data-rest="${key(d)}">${r?'Rest day ✨':'Make rest day'}</button></div>`}).join('')}${rrDays.filter(d=>rest[key(d)]&&busy(d)).length?'<p class="sm"><b>Heads up:</b> something is booked on one of your rest days.</p>':''}</section>`:'';
+  return `<button class="back" data-tab="more">‹ Back</button><h1>Swing &amp; R&amp;R</h1>${swingCard()}${guardHtml}
   <section class="card" style="background:var(--coralL)"><div class="between"><h2>R&amp;R planner</h2><span class="sm">${fmt(a,{day:'numeric',month:'short'})} – ${fmt(b,{day:'numeric',month:'short'})}</span></div>
   <h3>Booked</h3>${booked.length?booked.map(evRow).join(''):'<p class="mut">Nothing booked yet.</p>'}
   <h3>Things to do this break</h3>${rr.map((r,i)=>`<div class="between"><span>${esc(r)}</span><button class="badge" style="background:var(--card);color:var(--ink)" data-rr="${i}" aria-label="Remove ${esc(r)}">${ic('x')}</button></div>`).join('')}
@@ -259,7 +297,7 @@ function vMoney(){const P=D(2026,12,2);let np=new Date(P);while(diff(today,np)<0
   <a class="btn ghost" href="https://claude.ai/artifact/XZbr7j8Fisk3Faxf4C5i2f">Open the full Budget &amp; House Plan</a>`}
 
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen'].forEach(k=>o[k]=S.get(k,null));return o}
+function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen','replies','energy','wo','meals','rest','paidB'].forEach(k=>o[k]=S.get(k,null));return o}
 function csvRows(){const r=[['Date','Type','Item','Detail']];Object.keys(log).sort().forEach(d=>Object.keys(log[d]).forEach(id=>{if(log[d][id]){const m=MEDS.find(x=>x.id===id);r.push([d,'Medication',m?m.n:id,m?m.dose:''])}}));prn.forEach(x=>r.push([String(x).slice(0,10),'Medication','Tirzepatide','3 mg (as needed)']));cycle.forEach(d=>r.push([d,'Cycle','Period start','']));todos.filter(t=>t.done).forEach(t=>r.push(['','To-do done',t.t||t.text||'','']));receipts.forEach(x=>r.push([x.d||'','Receipt',x.n||x.t||'',x.a||'']));if(odo)r.push([key(today),'Car','Odometer',odo+' km']);return r.map(a=>a.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n')}
 async function shareFile(name,type,text){const f=new File([text],name,{type});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}catch(e){if(e.name==='AbortError')return}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function vHist(){const days=Object.keys(log).filter(d=>Object.values(log[d]).some(Boolean)).sort().reverse();
@@ -268,9 +306,9 @@ return `<button class="back" data-tab="more">‹ Back</button><h1>History &amp; 
 <section class="card"><h2>Medications</h2>${days.length?days.slice(0,60).map(d=>`<div class="between"><span class="sm" style="font-weight:700">${fmt(new Date(d+'T00:00'))}</span><span class="sm">${Object.keys(log[d]).filter(i=>log[d][i]).map(i=>(MEDS.find(m=>m.id===i)||{n:i}).n.split(' ')[0]).join(', ')}</span></div>`).join(''):'<p class="mut">Nothing ticked yet.</p>'}${prn.length?`<p class="sm" style="font-weight:700;margin-top:8px">Tirzepatide doses</p>${prn.slice().reverse().map(x=>`<p class="sm">${esc(String(x).slice(0,16).replace('T',' '))}</p>`).join('')}`:''}</section>
 <section class="card"><h2>Period starts</h2>${cycle.slice().reverse().map(d=>`<p class="sm">${fmt(new Date(d+'T00:00'))} ${new Date(d).getFullYear()}</p>`).join('')}</section>
 <section class="card"><h2>Other</h2><p class="sm">Odometer: ${odo?esc(odo)+' km':'not logged'}</p><p class="sm">Receipts saved: ${receipts.length}</p><p class="sm">To-dos done: ${todos.filter(t=>t.done).length}</p></section>
-<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 24 Nov, 2:30pm</p>`}
+<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 24 Nov, 4:30pm</p>`}
 
-const VIEWS={hist:vHist,today:vToday,cal:vCal,health:vHealth,todo:vTodo,more:vMore,swing:vSwing,study:vStudy,car:vCar,nums:vNums,deliv:vDeliv,rec:vRec,money:vMoney};
+const VIEWS={replies:vReplies,bills:vBills,docs:vDocs,wo:vWo,meals:vMeals,hist:vHist,today:vToday,cal:vCal,health:vHealth,todo:vTodo,more:vMore,swing:vSwing,study:vStudy,car:vCar,nums:vNums,deliv:vDeliv,rec:vRec,money:vMoney};
 const TABS=[['today','Today','home'],['cal','Calendar','cal'],['health','Health','heart'],['todo','To-do','list'],['more','More','more']];
 function render(){const v=sub||tab;document.getElementById('app').innerHTML=VIEWS[v]();
   document.getElementById('nav').innerHTML=TABS.map(([k,l,i])=>`<button class="${(sub?'more':tab)===k?'on':''}" data-tab="${k}" aria-current="${tab===k&&!sub?'page':'false'}">${ic(i)}${l}</button>`).join('')}
@@ -278,7 +316,13 @@ function sheet(html){const s=document.getElementById('sheet');document.getElemen
 function closeSheet(){document.getElementById('sheet').classList.remove('show')}
 document.addEventListener('click',e=>{const b=e.target.closest('button,[data-go]');if(!b)return;const d=b.dataset;
   if(e.target.id==='sheet'){closeSheet();return}
-  if(d.seen){seen[d.seen]=1;S.set('seen',seen);render()}
+  if(d.replied){const id=d.replied;if(id.startsWith('r_')){seen[id]=1;S.set('seen',seen)}else{replies.forEach(r=>{if(String(r.id)===id)r.done=1})};save2();render()}
+  else if(d.rest){rest[d.rest]=rest[d.rest]?0:1;save2();render()}
+  else if(d.paid){paidB[d.paid]=1;save2();render()}
+  else if(d.wo){const k=key(today);wo[k]=wo[k]||[];wo[k]=wo[k].includes(d.wo)?wo[k].filter(x=>x!==d.wo):[...wo[k],d.wo];save2();render()}
+  else if(d.en){const k=key(today);energy[k]=energy[k]==+d.en?undefined:+d.en;save2();render()}
+  else if(d.act==='mealclear'){meals.plan=meals.plan.filter(x=>!x.d);meals.shop=meals.shop.filter(x=>!x.d);save2();render()}
+  else if(d.seen){seen[d.seen]=1;S.set('seen',seen);render()}
   else if(d.tab){tab=d.tab;sub=null;S.set('tab',tab);render();scrollTo(0,0)}
   else if(d.go){sub=d.go;render();scrollTo(0,0)}
   else if(d.med){const k=key(today),m=MEDS.find(x=>x.id===d.med);log[k]=log[k]||{};
@@ -307,13 +351,16 @@ document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,fd=ne
   if(k==='cycle'){const v=fd.get('d');if(v&&!cycle.includes(v)){cycle.push(v);cycle.sort()}}
   if(k==='odo'){odo=String(fd.get('o')||'').replace(/\D/g,'')}
   if(k==='rec'){const p=fd.get('p');receipts.push({w:fd.get('w'),a:fd.get('a'),c:fd.get('c'),d:Date.now(),p:p&&p.name?p.name:''})}
-  save();render()});
+  if(k==='reply'){replies.push({id:Date.now(),who:fd.get('who'),via:fd.get('via'),note:fd.get('note')||''})}
+  if(k==='meal'){const t=(fd.get('t')||'').trim();if(t)meals[f.dataset.k].push({t})}
+  if(k==='ask'){const q=(fd.get('q')||'').trim();if(q){f.reset();location.href='https://claude.ai/new?q='+encodeURIComponent('[From my life app] '+q)}return}
+  save();save2();render()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 document.getElementById('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet()});
 render();
 }
 
-document.addEventListener('change',e=>{if(!e.target.matches('[data-restore]'))return;const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);if(o.app!=='georgia-life')throw 0;if(!confirm('Replace what is on this phone with the backup from '+String(o.exported).slice(0,10)+'?'))return;Object.keys(o).forEach(k=>{if(k!=='app'&&k!=='exported'&&o[k]!==null)S.set(k,o[k])});location.reload()}catch(err){alert("That file doesn't look like a My Life backup.")}})});
+document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.meal){const[k,i]=e.target.dataset.meal.split(':');meals[k][+i].d=e.target.checked;save2();render();return}if(!e.target.matches('[data-restore]'))return;const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);if(o.app!=='georgia-life')throw 0;if(!confirm('Replace what is on this phone with the backup from '+String(o.exported).slice(0,10)+'?'))return;Object.keys(o).forEach(k=>{if(k!=='app'&&k!=='exported'&&o[k]!==null)S.set(k,o[k])});location.reload()}catch(err){alert("That file doesn't look like a My Life backup.")}})});
 
 try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')}catch(e){}
 let wasOff=!navigator.onLine;addEventListener('offline',()=>{wasOff=true});addEventListener('online',()=>{if(wasOff){wasOff=false;setTimeout(()=>location.reload(),1500)}});
