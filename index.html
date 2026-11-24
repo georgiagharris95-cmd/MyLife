@@ -79,10 +79,10 @@ const diff=(a,b)=>Math.round((day0(b)-day0(a))/864e5);
 const now=new Date(),today=day0(now);
 // Roster: 8 on / 6 off, Tue to Tue, first swing starts Tue 17 Nov 2026
 const ANCHOR=D(2026,11,17);
-const rpos=d=>((diff(ANCHOR,d)%14)+14)%14;const onSwing=d=>diff(ANCHOR,d)>=0&&rpos(d)<8;
+const rpos=d=>((diff(ANCHOR,d)%14)+14)%14;const BREAKS=[['2026-12-23','2027-01-11']];const onBreak=d=>BREAKS.some(([a,b])=>key(d)>=a&&key(d)<=b);const onSwing=d=>diff(ANCHOR,d)>=0&&rpos(d)<8&&!onBreak(d);
 const nextStart=d=>{let x=day0(d);while(!(rpos(x)===0&&diff(ANCHOR,x)>=0)||diff(d,x)<=0)x=addD(x,1);return x};
 const rrBlock=d=>{const s=addD(d,7-rpos(d));return [s,addD(s,7)]};
-const travel=d=>diff(ANCHOR,d)>=0&&(rpos(d)===0||rpos(d)===7);
+const travel=d=>diff(ANCHOR,d)>=0&&(rpos(d)===0||rpos(d)===7)&&!onBreak(d);
 // Events
 const EV=[
 {d:D(2026,11,26),t:'2:00pm',n:'Physio · Pain Options',w:'Unit 1/7 Hardy St, South Perth',c:'var(--pink)',tel:'08 9367 2300',note:'Cancel 24 hrs ahead or 50% fee'},
@@ -102,6 +102,7 @@ const evOn=d=>EV.filter(e=>key(e.d)===key(d));
 const MEDS=[{id:'esc',n:'Escitalopram',dose:'10 mg',when:'daily',c:'var(--pink)'},{id:'wol',n:'BPC-157 + TB-500',sub:'Wolverine',dose:'1000 mcg',when:'daily',c:'var(--sun)'},{id:'cjc',n:'CJC-1295 (no DAC) + Ipamorelin',dose:'500 mcg',when:'weekdays',c:'var(--sky)'},{id:'tirz',n:'Tirzepatide',sub:'20 mg vial',dose:'3 mg',when:'asneeded',c:'var(--violet)'}];
 const dueOn=(m,d)=>m.when==='daily'||(m.when==='weekdays'&&d.getDay()>0&&d.getDay()<6);
 let log=S.get('meds',{}),prn=S.get('prn',[]),started=S.get('started',key(today));S.set('started',started);
+if(!S.get('mig1',false)){['2026-11-17','2026-11-18','2026-11-19','2026-11-20','2026-11-21','2026-11-22','2026-11-23'].forEach(k=>{const dt=new Date(k+'T05:00').toISOString();const day=new Date(k+'T00:00').getDay();log[k]=log[k]||{};log[k].esc=log[k].esc||dt;log[k].wol=log[k].wol||dt;if(day>0&&day<6)log[k].cjc=log[k].cjc||dt});if(started>'2026-11-17'){started='2026-11-17';S.set('started',started)}S.set('meds',log);S.set('mig1',true)}
 const adherence=m=>{let due=0,got=0;for(let d=addD(today,-29);d<=today;d=addD(d,1)){if(key(d)<started)continue;if(!dueOn(m,d))continue;if(key(d)===key(today)&&!log[key(d)]?.[m.id])continue;due++;if(log[key(d)]?.[m.id])got++}return due?Math.round(got/due*100)+'%':'starts today'};
 // Study: s1/s2 = todo | done | sub
 const UNITS=S.get('units',[
