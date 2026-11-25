@@ -146,16 +146,18 @@ function mailCard(){const n=MAIL.items.filter(m=>!seen[m.id]);if(!n.length)retur
 return `<section class="card" style="background:var(--skyL)"><div class="between"><h2>Heads up · ${n.length}</h2><span class="mut sm">Checked ${MAIL.updated}</span></div>${n.map(m=>`<div class="row" style="align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)"><div class="grow"><p class="sm mut">${esc(m.from)}</p><p style="font-weight:700">${esc(m.t)}</p><p class="sm">${esc(m.l)}</p><div class="row" style="gap:8px;margin-top:6px">${m.url&&m.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${m.url}">Open email</a>`:''}${m.tel?telA(m.tel,'var(--card)'):''}</div></div><button class="btn" style="flex:none" data-seen="${esc(m.id)}" aria-label="Mark as seen">✓</button></div>`).join('')}</section>`}
 /*RECUR-START*/const RECUR=[
 {id:'rent',n:'Rent (Deft Real Estate)',amt:800,f:'fortnightly',next:'2026-12-09',src:'Last came out Wed 25 Nov'},
-{id:'xfer',n:'Shared account (weekly)',amt:50,f:'weekly',next:'2026-11-30',src:'Every Monday'},
+{id:'xfer',n:'Joint account with Erin (weekly)',amt:50,f:'weekly',next:'2026-11-30',src:'Every Monday, for shared groceries and bills'},
 {id:'telstra',n:'Telstra phone + iPhone/Watch',amt:163.91,f:'monthly',next:'2026-11-30',src:'Bill arrives on the 30th',manual:1},
-{id:'apple',n:'Apple Music + iCloud',amt:22.98,f:'monthly',next:'2026-12-04',src:'Around the 4th'},
+{id:'apple',n:'Apple (iCloud + Music)',amt:44.98,f:'monthly',next:'2026-12-13',src:'Two charges around the 13th to 15th, on the NAB card'},
 {id:'synergy',n:'Power (Synergy, your half)',amt:92.50,f:'2-monthly',next:'2027-01-16',src:'Bill arrives around the 16th'},
 {id:'carloan',n:'Car loan (PowerTorque)',amt:1100,f:'monthly',next:'2026-12-17',src:'Every 17th'},
 {id:'rac',n:'Car insurance (RAC)',amt:174.02,f:'monthly',next:'2026-12-15',src:'New amount after 18 Nov renewal'},
 {id:'nib',n:'Health insurance (nib)',amt:77.36,f:'monthly',next:'2026-12-16',src:'Mid-month, last $77.36 on 16 Nov (it varies a bit)'},
 {id:'gym',n:'Gym (Plus Fitness)',amt:29.90,f:'fortnightly',next:'2026-11-30',src:'Every second Monday, last 16 Nov'},
 {id:'claude',n:'Claude',amt:34,f:'monthly',next:'2026-12-25',src:'Last went through around 25 Nov'},
-{id:'netflix',n:'Netflix',amt:9.99,f:'monthly',next:'2026-12-20',src:'20th each month'},
+{id:'netflix',n:'Netflix',amt:20.99,f:'monthly',next:'2026-12-21',src:'Around the 20th to 22nd'},
+{id:'skool',n:'Skool membership',amt:85,f:'monthly',next:'2026-12-06',src:'USD charge around the 6th, plus a ~$3 overseas fee'},
+{id:'prime',n:'Amazon Prime',amt:9.99,f:'monthly',next:'2026-11-26',src:'Around the 24th to 26th, on the NAB card'},
 {id:'rego',n:'Car rego',amt:1072.85,f:'yearly',next:'2027-07-02',src:''}
 ];/*RECUR-END*/
 let billDates=S.get('billDates',{});
@@ -331,7 +333,7 @@ function vRec(){return `<button class="back" data-tab="more">‹ Back</button><h
   <form class="card" data-form="rec"><h2>Add a receipt</h2><input class="inp" name="w" placeholder="What was it? e.g. work boots" required aria-label="What was it"><div class="row"><input class="inp" name="a" inputmode="decimal" placeholder="$ amount" aria-label="Amount"><select class="inp" name="c" aria-label="Category">${['Work gear','PPE','Study','Phone/internet','Other'].map(c=>`<option>${c}</option>`).join('')}</select></div><label class="sm mut">Photo (optional) <input type="file" accept="image/*" name="p"></label><button class="btn" style="background:var(--pink);color:#241B3A">Save receipt</button></form>
   <section class="card"><div class="between"><h2>This financial year</h2><b>$${receipts.reduce((s,r)=>s+(+r.a||0),0).toFixed(2)}</b></div>${receipts.length?receipts.slice().reverse().map(r=>`<div class="between"><div><p style="font-weight:700">${esc(r.w)}</p><p class="mut sm">${r.c} · ${fmt(new Date(r.d))}${r.p?' · photo: '+esc(r.p):''}</p></div><b>$${(+r.a||0).toFixed(2)}</b></div>`).join(''):'<p class="mut">No receipts yet.</p>'}<p class="mut sm">Your accountant can tell you what's claimable.</p></section>`}
 const BUD={pay:6025,bills:[['Rent',800,'Fortnightly',800],['Car loan (PowerTorque)',1100,'Monthly',507.69],['Car insurance (RAC)',206.48,'Monthly',95.30],['Car rego',1072.85,'Yearly',41.26],['Health insurance (nib)',82,'Monthly',37.85],['Phone plan (Telstra)',75.60,'Monthly',34.89],['iPhone + Watch (Telstra)',88.31,'Monthly',40.76],['Power (Synergy, your half)',92.50,'Every 2 months',21.35],['Gym',14.95,'Weekly',29.90],['Claude',34,'Monthly',15.69],['Apple Music + iCloud',22.98,'Monthly',10.61],['Netflix',9.99,'Monthly',4.61]],
-every:[['Groceries',200],['Eating out & coffee',150],['Fuel',140],['Beauty & self-care',150],['Shopping & clothes',150],['Fun & social',120],['Pets',60],['Gifts & bits',80]],save:[['Car servicing & tyres',50]]};
+every:[['One-offs & everything else',861],['Shopping & clothes',486],['Beauty, health & self-care',221],['Groceries',158],['Fuel',137],['Trips & overseas',131],['Cash out',108],['Eating out & coffee',90],['Card interest & fees',75],['Parking',22],['Fun & events',12]],save:[['Car servicing & tyres',50]]};
 function vMoney(){const P=D(2026,12,2);let np=new Date(P);while(diff(today,np)<0)np=addD(np,14);while(diff(today,addD(np,-14))>=0)np=addD(np,-14);const dl=diff(today,np);
   const sum=a=>a.reduce((t,x)=>t+x,0);const PF={weekly:2,fortnightly:1,monthly:12/26,'2-monthly':6/26,quarterly:4/26,yearly:1/26};const RB=allRecur().filter(r=>r.amt).map(r=>[r.n,r.amt,r.f,Math.round(r.amt*PF[r.f]*100)/100]);const bills=sum(RB.map(b=>b[3])),every=sum(BUD.every.map(b=>b[1])),sv=sum(BUD.save.map(b=>b[1]));
   const extraCar=diff(D(2027,2,10),today)>=0?250:0;const spare=BUD.pay-bills-every-sv-extraCar;
@@ -361,7 +363,7 @@ return `<button class="back" data-tab="more">‹ Back</button><h1>History &amp; 
 <section class="card"><h2>Medications</h2>${days.length?days.slice(0,60).map(d=>`<div class="between"><span class="sm" style="font-weight:700">${fmt(new Date(d+'T00:00'))}</span><span class="sm">${Object.keys(log[d]).filter(i=>log[d][i]).map(i=>(MEDS.find(m=>m.id===i)||{n:i}).n.split(' ')[0]).join(', ')}</span></div>`).join(''):'<p class="mut">Nothing ticked yet.</p>'}${prn.length?`<p class="sm" style="font-weight:700;margin-top:8px">Tirzepatide doses</p>${prn.slice().reverse().map(x=>`<p class="sm">${esc(String(x).slice(0,16).replace('T',' '))}</p>`).join('')}`:''}</section>
 <section class="card"><h2>Period starts</h2>${cycle.slice().reverse().map(d=>`<p class="sm">${fmt(new Date(d+'T00:00'))} ${new Date(d).getFullYear()}</p>`).join('')}</section>
 <section class="card"><h2>Other</h2><p class="sm">Odometer: ${odo?esc(odo)+' km':'not logged'}</p><p class="sm">Receipts saved: ${receipts.length}</p><p class="sm">To-dos done: ${todos.filter(t=>t.done).length}</p></section>
-<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 25 Nov, 7:15pm</p>`}
+<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 25 Nov, 8:45pm</p>`}
 
 const VIEWS={quit:vQuit,replies:vReplies,bills:vBills,docs:vDocs,wo:vWo,meals:vMeals,hist:vHist,today:vToday,cal:vCal,health:vHealth,todo:vTodo,more:vMore,swing:vSwing,study:vStudy,car:vCar,nums:vNums,deliv:vDeliv,rec:vRec,money:vMoney};
 const TABS=[['today','Today','home'],['cal','Calendar','cal'],['health','Health','heart'],['todo','To-do','list'],['more','More','more']];
