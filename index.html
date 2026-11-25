@@ -192,6 +192,13 @@ const WOT=[['Upper','💪'],['Lower','🦵'],['Push','➡️'],['Pull','⬅️']
 const autoReplies=()=>MAIL.items.filter(m=>m.reply&&!seen['r_'+m.id]).map(m=>({id:'r_'+m.id,who:m.from,via:'Email',note:m.t,draft:m.draft||'',url:m.url,auto:1}));
 const waiting=()=>[...autoReplies(),...replies.filter(r=>!r.done)];
 const relaxed=()=>!onSwing(today)||now.getHours()>=18||travel(today);
+
+let spend=S.get('spend',{lim:350,items:[]});
+const wkStart=()=>{const d=new Date(today);const w=(d.getDay()+6)%7;return addD(d,-w)};
+function spendCard(){const ws=wkStart(),k0=key(ws);const L=spend.items.filter(x=>x.d>=k0);const used=L.reduce((a,x)=>a+x.a,0),left=spend.lim-used,pct=Math.min(100,used/spend.lim*100);const daysLeft=7-((today.getDay()+6)%7);
+return `<section class="card"><div class="between"><h2>This week's spending</h2><span class="chip" style="background:${left<0?'var(--coralL)':'var(--mintL)'}">$${Math.abs(Math.round(left))} ${left<0?'over':'left'}</span></div><div style="height:12px;border-radius:7px;background:var(--line);overflow:hidden;margin:6px 0"><div style="height:100%;width:${pct}%;background:${pct>=100?'var(--coral)':pct>80?'var(--sun)':'var(--mint)'}"></div></div><p class="sm mut">$${used.toFixed(2).replace(/\.00$/,'')} of $${spend.lim} · ${daysLeft} day${daysLeft>1?'s':''} left · resets Monday</p>
+<form data-form="spend" class="row" style="gap:6px;margin-top:6px"><input class="inp" name="a" type="number" step="0.01" inputmode="decimal" placeholder="$" aria-label="Amount spent" style="width:90px" required><input class="inp" name="n" placeholder="What for? (optional)" aria-label="What for" style="flex:1"><button class="btn sun" aria-label="Add">${ic('plus')}</button></form>
+${L.length?`<details style="margin-top:6px"><summary class="sm">This week (${L.length})</summary>${L.slice().reverse().map(x=>`<div class="between sm" style="padding:3px 0"><span>${fmt(new Date(x.d+'T00:00'),{weekday:'short'})} · ${esc(x.n||'Spend')}</span><span>$${x.a.toFixed(2).replace(/\.00$/,'')} <button class="back" data-rmspend="${x.id}" aria-label="Remove">✕</button></span></div>`).join('')}</details>`:''}</section>`}
 function askBar(){return `<form class="card" data-form="ask" style="flex-direction:row;align-items:center;gap:8px;padding:10px 12px;background:var(--violetL)"><input class="inp" name="q" placeholder="Ask Claude… e.g. cancel physio Thursday" aria-label="Ask Claude" style="flex:1"><button class="btn" aria-label="Send to Claude">Ask</button></form>`}
 function bedCard(){const h=now.getHours();const tmr=addD(today,1);if(!(h>=20&&(onSwing(tmr)||onSwing(today)&&!(rpos(today)===7))))return '';return `<section class="card" style="background:var(--violetL)"><h2>Time to wind down 🌙</h2><p class="sm">Alarm's at 4:50am. Lights out by 9:30 gets you about 7 hours. Phone down, the people stuff can wait till tomorrow.</p></section>`}
 function replyCard(){const w=waiting();if(!w.length||!relaxed())return '';return `<section class="card" style="background:var(--sunL)"><div class="between"><h2>People waiting · ${w.length}</h2><button class="back" data-go="replies">See all</button></div><p class="sm mut">No rush. Pick one, send a quick line, done.</p>${w.slice(0,3).map(r=>`<p class="sm"><b>${esc(r.who)}</b> · ${esc(r.via)}</p>`).join('')}</section>`}
@@ -258,7 +265,7 @@ function vToday(){
   const h=now.getHours(),g=h<12?'Morning':h<17?'Afternoon':'Evening';const open=todos.filter(t=>!t.done);
   const taken=MEDS.filter(m=>dueOn(m,today)&&log[key(today)]?.[m.id]).length,due=MEDS.filter(m=>dueOn(m,today)).length;
   return `<header class="between"><div><p class="mut">${fmt(today,{weekday:'long',day:'numeric',month:'long'})}</p><h1>${g}, Georgia</h1></div></header>
-  ${askBar()}${bedCard()}${quitCard()}${mailCard()}${prepCard()}${swingCard()}${replyCard()}${billCard()}
+  ${askBar()}${bedCard()}${quitCard()}${mailCard()}${prepCard()}${swingCard()}${spendCard()}${replyCard()}${billCard()}
   ${wxCard()}
   ${!ear&&diff(today,D(2026,11,30))>=0?`<section class="card" style="background:var(--sunL)"><div class="row">${ic('mail')}<div class="grow"><p style="font-weight:700">Ear Science asked if you can do Mon 30 Nov, 1pm</p><p class="sm">They tried calling. 08 6166 3767</p></div></div><div class="row" style="flex-wrap:wrap"><a class="btn" href="tel:0861663767">${ic('phone')}Call them</a><button class="btn ghost" data-act="ear">I've confirmed</button></div></section>`:''}
   <section class="card"><div class="between"><h2>Morning meds</h2><span class="chip" style="background:${taken===due?'var(--mintL)':'var(--pinkL)'}">${taken} of ${due} taken</span></div>${medRows(today)}<button class="btn ghost" data-tab="health">Tirzepatide · ${lastPrn().replace('Last dose: ','last ')}</button></section>
@@ -358,7 +365,7 @@ function vMoney(){const P=D(2026,12,2);let np=new Date(P);while(diff(today,np)<0
   <a class="btn ghost" href="https://claude.ai/artifact/XZbr7j8Fisk3Faxf4C5i2f">Open the full Budget &amp; House Plan</a>`}
 
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen','replies','energy','wo','meals','rest','paidB','quit','billDates','billCustom','placeCustom','packList','leaveList','card'].forEach(k=>o[k]=S.get(k,null));return o}
+function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen','replies','energy','wo','meals','rest','paidB','quit','billDates','billCustom','placeCustom','packList','leaveList','card','spend'].forEach(k=>o[k]=S.get(k,null));return o}
 function csvRows(){const r=[['Date','Type','Item','Detail']];Object.keys(log).sort().forEach(d=>Object.keys(log[d]).forEach(id=>{if(log[d][id]){const m=MEDS.find(x=>x.id===id);r.push([d,'Medication',m?m.n:id,m?m.dose:''])}}));prn.forEach(x=>r.push([String(x).slice(0,10),'Medication','Tirzepatide','3 mg (as needed)']));cycle.forEach(d=>r.push([d,'Cycle','Period start','']));todos.filter(t=>t.done).forEach(t=>r.push(['','To-do done',t.t||t.text||'','']));receipts.forEach(x=>r.push([x.d||'','Receipt',x.n||x.t||'',x.a||'']));if(odo)r.push([key(today),'Car','Odometer',odo+' km']);return r.map(a=>a.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n')}
 async function shareFile(name,type,text){const f=new File([text],name,{type});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}catch(e){if(e.name==='AbortError')return}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function vHist(){const days=Object.keys(log).filter(d=>Object.values(log[d]).some(Boolean)).sort().reverse();
@@ -367,7 +374,7 @@ return `<button class="back" data-tab="more">‹ Back</button><h1>History &amp; 
 <section class="card"><h2>Medications</h2>${days.length?days.slice(0,60).map(d=>`<div class="between"><span class="sm" style="font-weight:700">${fmt(new Date(d+'T00:00'))}</span><span class="sm">${Object.keys(log[d]).filter(i=>log[d][i]).map(i=>(MEDS.find(m=>m.id===i)||{n:i}).n.split(' ')[0]).join(', ')}</span></div>`).join(''):'<p class="mut">Nothing ticked yet.</p>'}${prn.length?`<p class="sm" style="font-weight:700;margin-top:8px">Tirzepatide doses</p>${prn.slice().reverse().map(x=>`<p class="sm">${esc(String(x).slice(0,16).replace('T',' '))}</p>`).join('')}`:''}</section>
 <section class="card"><h2>Period starts</h2>${cycle.slice().reverse().map(d=>`<p class="sm">${fmt(new Date(d+'T00:00'))} ${new Date(d).getFullYear()}</p>`).join('')}</section>
 <section class="card"><h2>Other</h2><p class="sm">Odometer: ${odo?esc(odo)+' km':'not logged'}</p><p class="sm">Receipts saved: ${receipts.length}</p><p class="sm">To-dos done: ${todos.filter(t=>t.done).length}</p></section>
-<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 25 Nov, 9pm</p>`}
+<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 25 Nov, 9:15pm</p>`}
 
 const VIEWS={quit:vQuit,replies:vReplies,bills:vBills,docs:vDocs,wo:vWo,meals:vMeals,hist:vHist,today:vToday,cal:vCal,health:vHealth,todo:vTodo,more:vMore,swing:vSwing,study:vStudy,car:vCar,nums:vNums,deliv:vDeliv,rec:vRec,money:vMoney};
 const TABS=[['today','Today','home'],['cal','Calendar','cal'],['health','Health','heart'],['todo','To-do','list'],['more','More','more']];
@@ -389,6 +396,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button,[data-go]
   else if(d.delplace){if(confirm('Delete this place?')){placeCustom[d.delplace]={...(placeCustom[d.delplace]||{}),del:1};S.set('placeCustom',placeCustom);closeSheet();render()}}
   else if(d.rmpack!==undefined){packList=(packList||PACK).filter((_,i)=>i!=d.rmpack);S.set('packList',packList);render()}
   else if(d.rmleave!==undefined){leaveList=(leaveList||LEAVE).filter((_,i)=>i!=d.rmleave);S.set('leaveList',leaveList);render()}
+  else if(d.rmspend){spend.items=spend.items.filter(x=>String(x.id)!==d.rmspend);S.set('spend',spend);render()}
   else if(d.paid){paidB[d.paid]=1;save2();render()}
   else if(d.wopick){woDay=d.wopick;render();scrollTo(0,0)}
   else if(d.wodayReset){woDay=key(today);render()}
@@ -428,6 +436,7 @@ document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,fd=ne
   if(k==='billedit'){const id=f.dataset.id||('u'+Date.now());const a=fd.get('amt');billCustom[id]={...(billCustom[id]||{}),n:fd.get('n'),amt:a===''?null:+a,f:fd.get('f'),manual:fd.get('m')?1:0};if(!f.dataset.id)billCustom[id].next='';const d=fd.get('d');billDates[id]=d||'';S.set('billCustom',billCustom);S.set('billDates',billDates);closeSheet()}
   if(k==='placeedit'){const id=f.dataset.id||('u'+Date.now());placeCustom[id]={...(placeCustom[id]||{}),n:fd.get('n'),s:fd.get('s'),t:fd.get('t'),a:fd.get('a')};S.set('placeCustom',placeCustom);closeSheet()}
   if(k==='packadd'){const t=(fd.get('t')||'').trim();if(t){if(f.dataset.k==='pack'){packList=[...(packList||PACK),t];S.set('packList',packList)}else{leaveList=[...(leaveList||LEAVE),t];S.set('leaveList',leaveList)}}}
+  if(k==='spend'){const a=+fd.get('a');if(a>0){spend.items.push({id:Date.now(),d:key(today),a,n:(fd.get('n')||'').trim()});spend.items=spend.items.filter(x=>diff(new Date(x.d+'T00:00'),today)<120);S.set('spend',spend)}}
   if(k==='card'){const b=fd.get('b'),pp=fd.get('pp');if(pp)card.pp=+pp;if(b){card.hist.push({d:key(today),b:+b})}S.set('card',card)}
   if(k==='billdate'){const v=fd.get('d');if(v){billDates[f.dataset.id]=v;S.set('billDates',billDates)}}
   if(k==='reply'){replies.push({id:Date.now(),who:fd.get('who'),via:fd.get('via'),note:fd.get('note')||''})}
