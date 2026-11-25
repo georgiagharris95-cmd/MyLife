@@ -144,6 +144,27 @@ const telA=(n,c='var(--mintL)')=>`<a href="tel:${n.replace(/\s/g,'')}" aria-labe
 let seen=S.get('seen',{});
 function mailCard(){const n=MAIL.items.filter(m=>!seen[m.id]);if(!n.length)return '';
 return `<section class="card" style="background:var(--skyL)"><div class="between"><h2>Heads up · ${n.length}</h2><span class="mut sm">Checked ${MAIL.updated}</span></div>${n.map(m=>`<div class="row" style="align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)"><div class="grow"><p class="sm mut">${esc(m.from)}</p><p style="font-weight:700">${esc(m.t)}</p><p class="sm">${esc(m.l)}</p><div class="row" style="gap:8px;margin-top:6px">${m.url&&m.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${m.url}">Open email</a>`:''}${m.tel?telA(m.tel,'var(--card)'):''}</div></div><button class="btn" style="flex:none" data-seen="${esc(m.id)}" aria-label="Mark as seen">✓</button></div>`).join('')}</section>`}
+/*RECUR-START*/const RECUR=[
+{id:'rent',n:'Rent (Deft Real Estate)',amt:800,f:'fortnightly',next:'2026-12-09',src:'Last came out Wed 25 Nov'},
+{id:'xfer',n:'Weekly transfer out (Mondays)',amt:null,f:'weekly',next:'2026-11-30',src:'Seen 16 and 23 Nov'},
+{id:'telstra',n:'Telstra phone + iPhone/Watch',amt:163.91,f:'monthly',next:'2026-11-30',src:'Bill arrives on the 30th'},
+{id:'apple',n:'Apple Music + iCloud',amt:22.98,f:'monthly',next:'2026-12-04',src:'Around the 4th'},
+{id:'synergy',n:'Power (Synergy, your half)',amt:92.50,f:'2-monthly',next:'2027-01-16',src:'Bill arrives around the 16th'},
+{id:'carloan',n:'Car loan (PowerTorque)',amt:1100,f:'monthly',next:'',src:''},
+{id:'rac',n:'Car insurance (RAC)',amt:206.48,f:'monthly',next:'',src:'Renewed 18 Nov'},
+{id:'nib',n:'Health insurance (nib)',amt:82,f:'monthly',next:'',src:''},
+{id:'gym',n:'Gym (Plus Fitness)',amt:14.95,f:'weekly',next:'',src:''},
+{id:'claude',n:'Claude',amt:34,f:'monthly',next:'',src:'Bounced recently, worth checking'},
+{id:'netflix',n:'Netflix',amt:9.99,f:'monthly',next:'',src:''},
+{id:'rego',n:'Car rego',amt:1072.85,f:'yearly',next:'2027-07-02',src:''}
+];/*RECUR-END*/
+let billDates=S.get('billDates',{});
+const step=(d,f)=>{const x=new Date(d);if(f==='weekly')return addD(x,7);if(f==='fortnightly')return addD(x,14);if(f==='monthly')x.setMonth(x.getMonth()+1);else if(f==='2-monthly')x.setMonth(x.getMonth()+2);else if(f==='yearly')x.setFullYear(x.getFullYear()+1);return x};
+const recNext=r=>{const v=(r.id in billDates)?billDates[r.id]:r.next;if(!v)return null;let d=new Date(v+'T00:00');let g=0;while(diff(today,d)<0&&g++<400)d=step(d,r.f);return d};
+const occ=(r,days)=>{let d=recNext(r);const out=[];let g=0;while(d&&diff(today,d)<=days&&g++<60){out.push(d);d=step(d,r.f)}return out};
+const nextPay=()=>{let d=new Date('2026-12-02T00:00');while(diff(today,d)<0)d=addD(d,14);return d};
+const money=v=>v==null?'amount?':'$'+(+v).toFixed(2).replace(/\.00$/,'');
+function upcomingBills(days){const L=[];RECUR.forEach(r=>occ(r,days).forEach(d=>L.push({d,r})));return L.sort((a,b)=>a.d-b.d)}
 /*BILLS-START*/const BILLS=[
 {id:'synergy-nov',n:'Synergy power bill',due:'',amt:'',note:'Arrived 16 Nov. Open the email for the amount and due date.'},
 {id:'rac-2026',n:'RAC car insurance',due:'',amt:'$174.02',note:'Renewed, direct debit.',paid:true},
@@ -168,12 +189,18 @@ function replyCard(){const w=waiting();if(!w.length||!relaxed())return '';return
 function prepCard(){if(onSwing(today))return '';const n=nextStart(today);const dd=diff(today,n);if(dd<0||dd>2)return '';const[a,b]=[n,addD(n,7)];const miss=EV.filter(e=>diff(a,e.d)>=0&&diff(e.d,b)>=0);const pc=PACK.filter(p=>packed[p]).length;
 return `<section class="card" style="background:var(--coralL)"><h2>Swing in ${dd===0?'today':dd===1?'1 day':dd+' days'}</h2><p class="sm">Packing: <b>${pc} of ${PACK.length}</b> done. Pack 8 days of every med in your stack.</p>${miss.length?`<p class="sm"><b>Clashes while you're away:</b> ${miss.map(e=>esc(e.n)+' ('+fmt(e.d)+')').join(', ')}. Worth rescheduling now.</p>`:'<p class="sm">No appointments clash with this swing.</p>'}<button class="btn ghost" data-go="swing">Open packing list</button></section>`}
 const billDue=b=>b.due?diff(today,new Date(b.due+'T00:00')):null;
-function billCard(){const soon=BILLS.filter(b=>!b.paid&&!paidB[b.id]&&(billDue(b)===null||billDue(b)<=14));if(!soon.length)return '';return `<section class="card"><div class="between"><h2>Bills due soon</h2><button class="back" data-go="bills">All bills</button></div>${soon.map(b=>`<p class="sm"><b>${esc(b.n)}</b>${b.amt?' · '+esc(b.amt):''}${b.due?' · due '+fmt(new Date(b.due+'T00:00')):''}</p>`).join('')}</section>`}
+function billCard(){const soon=upcomingBills(3);const other=BILLS.filter(b=>!b.paid&&!paidB[b.id]&&b.due&&billDue(b)<=7);if(!soon.length&&!other.length)return '';return `<section class="card" style="background:var(--skyL)"><div class="between"><h2>Coming out soon</h2><button class="back" data-go="bills">All bills</button></div>${soon.map(({d,r})=>{const dd=diff(today,d);return `<p class="sm"><b>${dd===0?'Today':dd===1?'Tomorrow':fmt(d,{weekday:'short',day:'numeric'})}</b> · ${esc(r.n)} · ${money(r.amt)}</p>`}).join('')}${other.map(b=>`<p class="sm"><b>${fmt(new Date(b.due+'T00:00'))}</b> · ${esc(b.n)}${b.amt?' · '+esc(b.amt):''}</p>`).join('')}<p class="sm mut">Make sure it's in your account the night before.</p></section>`}
 const back='<button class="back" data-tab="more">‹ Back</button>';
 function vReplies(){const w=waiting();return `${back}<h1>People waiting</h1><p class="mut">A reply doesn't have to be long. "Hey! Sorry I went quiet, swing life. Still keen to catch up?" counts.</p>
 <form class="card" data-form="reply"><h2>Add someone</h2><input class="inp" name="who" placeholder="Who? e.g. Sam" required aria-label="Who"><select class="inp" name="via" aria-label="Where"><option>Text</option><option>Instagram</option><option>Facebook</option><option>WhatsApp</option><option>Email</option><option>Call back</option></select><input class="inp" name="note" placeholder="What about? (optional)" aria-label="About"><button class="btn">Add</button></form>
 ${w.length?w.map(r=>`<section class="card"><div class="between"><div><p style="font-weight:700">${esc(r.who)}</p><p class="sm mut">${esc(r.via)}${r.note?' · '+esc(r.note):''}</p></div><button class="btn" data-replied="${esc(String(r.id))}" aria-label="Replied">✓</button></div>${r.draft?`<p class="sm" style="background:var(--card);padding:10px;border-radius:12px">${esc(r.draft)}</p>`:''}${r.url&&r.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${r.url}">Open email</a>`:''}</section>`).join(''):'<section class="card"><p>All caught up 🙌</p></section>'}`}
-function vBills(){return `${back}<h1>Bills &amp; renewals</h1>${BILLS.map(b=>{const pd=b.paid||paidB[b.id];return `<section class="card"><div class="between"><div><p style="font-weight:700" class="${pd?'done-txt':''}">${esc(b.n)}</p><p class="sm mut">${b.amt?esc(b.amt)+' · ':''}${b.due?'due '+fmt(new Date(b.due+'T00:00'),{day:'numeric',month:'short',year:'numeric'}):'date in email'}</p><p class="sm">${esc(b.note||'')}</p></div>${pd?'<span class="chip" style="background:var(--mintL)">Paid</span>':`<button class="btn ghost" data-paid="${esc(b.id)}">Paid</button>`}</div></section>`}).join('')}<p class="mut sm">New bills from your emails get added here automatically.</p>`}
+function vBills(){const np=nextPay();const L=upcomingBills(35);const before=L.filter(x=>diff(x.d,np)>0);const tot=before.reduce((a,x)=>a+(x.r.amt||0),0);const nodate=RECUR.filter(r=>!recNext(r));
+const grp={};L.forEach(x=>{(grp[key(x.d)]=grp[key(x.d)]||[]).push(x)});
+return `${back}<h1>Bills</h1><section class="card" style="background:var(--sunL)"><h2>Before payday (${fmt(np,{weekday:'short',day:'numeric',month:'short'})})</h2><p style="font-family:Outfit;font-weight:800;font-size:28px">${money(tot)}</p><p class="sm">${before.length?`${before.length} payment${before.length>1?'s':''} come out before your next pay. Keep at least this much in the account so nothing bounces.`:'Nothing due before payday.'}</p></section>
+<section class="card"><h2>Next 5 weeks</h2>${Object.keys(grp).map(k=>{const d=new Date(k+'T00:00'),dd=diff(today,d);return `<div style="padding:6px 0;border-top:1px solid var(--line)"><p class="sm" style="font-weight:700">${dd===0?'Today':dd===1?'Tomorrow':fmt(d,{weekday:'short',day:'numeric',month:'short'})}${key(d)===key(np)?' · 💰 payday':''}</p>${grp[k].map(({r})=>`<div class="between sm"><span>${esc(r.n)}</span><span>${money(r.amt)}</span></div>`).join('')}</div>`}).join('')||'<p class="mut">Nothing coming up.</p>'}</section>
+${nodate.length?`<section class="card" style="background:var(--coralL)"><h2>Needs a date</h2><p class="sm">I couldn't see these in your emails yet. Pop in the next date it comes out (check your bank app) and I'll keep track from there.</p>${nodate.map(r=>`<form class="between" data-form="billdate" data-id="${r.id}" style="gap:8px;padding:4px 0"><span class="sm"><b>${esc(r.n)}</b><br>${money(r.amt)} · ${r.f}${r.src?' · '+esc(r.src):''}</span><span class="row" style="gap:6px"><input class="inp" type="date" name="d" aria-label="Next date for ${esc(r.n)}" style="width:140px"><button class="btn sm">Save</button></span></form>`).join('')}</section>`:''}
+<section class="card"><h2>All regular bills</h2>${RECUR.map(r=>{const n=recNext(r);return `<div class="between sm" style="padding:3px 0"><span>${esc(r.n)}<br><span class="mut">${r.f}${n?' · next '+fmt(n,{day:'numeric',month:'short'}):''}</span></span><span>${money(r.amt)}${n?` <button class="back" data-clrbill="${r.id}" aria-label="Change date">edit</button>`:''}</span></div>`}).join('')}</section>
+${BILLS.filter(b=>!b.paid&&!paidB[b.id]).length?`<section class="card"><h2>From your emails</h2>${BILLS.filter(b=>!b.paid&&!paidB[b.id]).map(b=>`<div class="between"><p class="sm"><b>${esc(b.n)}</b>${b.amt?' · '+esc(b.amt):''}${b.due?' · due '+fmt(new Date(b.due+'T00:00')):''}<br>${esc(b.note||'')}</p><button class="btn ghost sm" data-paid="${esc(b.id)}">Paid</button></div>`).join('')}</section>`:''}`}
 function vDocs(){const g=[...new Set(DOCS.map(d=>d.k))];return `${back}<h1>Paperwork</h1>${g.map(k=>`<section class="card"><h2>${esc(k)}</h2>${DOCS.filter(d=>d.k===k).map(d=>`<div class="between"><p class="sm">${esc(d.n)}<br><span class="mut">${fmt(new Date(d.d+'T00:00'))}</span></p>${d.url&&d.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${d.url}">Open</a>`:''}</div>`).join('')}</section>`).join('')}<p class="mut sm">Payslips, work, TAFE and government emails get filed here automatically.</p>`}
 let woDay=null;
 document.addEventListener('change',e=>{if(e.target.matches('[data-woday]')&&e.target.value){woDay=e.target.value;render()}});
@@ -316,7 +343,7 @@ function vMoney(){const P=D(2026,12,2);let np=new Date(P);while(diff(today,np)<0
   <a class="btn ghost" href="https://claude.ai/artifact/XZbr7j8Fisk3Faxf4C5i2f">Open the full Budget &amp; House Plan</a>`}
 
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen','replies','energy','wo','meals','rest','paidB','quit'].forEach(k=>o[k]=S.get(k,null));return o}
+function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen','replies','energy','wo','meals','rest','paidB','quit','billDates'].forEach(k=>o[k]=S.get(k,null));return o}
 function csvRows(){const r=[['Date','Type','Item','Detail']];Object.keys(log).sort().forEach(d=>Object.keys(log[d]).forEach(id=>{if(log[d][id]){const m=MEDS.find(x=>x.id===id);r.push([d,'Medication',m?m.n:id,m?m.dose:''])}}));prn.forEach(x=>r.push([String(x).slice(0,10),'Medication','Tirzepatide','3 mg (as needed)']));cycle.forEach(d=>r.push([d,'Cycle','Period start','']));todos.filter(t=>t.done).forEach(t=>r.push(['','To-do done',t.t||t.text||'','']));receipts.forEach(x=>r.push([x.d||'','Receipt',x.n||x.t||'',x.a||'']));if(odo)r.push([key(today),'Car','Odometer',odo+' km']);return r.map(a=>a.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n')}
 async function shareFile(name,type,text){const f=new File([text],name,{type});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}catch(e){if(e.name==='AbortError')return}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function vHist(){const days=Object.keys(log).filter(d=>Object.values(log[d]).some(Boolean)).sort().reverse();
@@ -325,7 +352,7 @@ return `<button class="back" data-tab="more">‹ Back</button><h1>History &amp; 
 <section class="card"><h2>Medications</h2>${days.length?days.slice(0,60).map(d=>`<div class="between"><span class="sm" style="font-weight:700">${fmt(new Date(d+'T00:00'))}</span><span class="sm">${Object.keys(log[d]).filter(i=>log[d][i]).map(i=>(MEDS.find(m=>m.id===i)||{n:i}).n.split(' ')[0]).join(', ')}</span></div>`).join(''):'<p class="mut">Nothing ticked yet.</p>'}${prn.length?`<p class="sm" style="font-weight:700;margin-top:8px">Tirzepatide doses</p>${prn.slice().reverse().map(x=>`<p class="sm">${esc(String(x).slice(0,16).replace('T',' '))}</p>`).join('')}`:''}</section>
 <section class="card"><h2>Period starts</h2>${cycle.slice().reverse().map(d=>`<p class="sm">${fmt(new Date(d+'T00:00'))} ${new Date(d).getFullYear()}</p>`).join('')}</section>
 <section class="card"><h2>Other</h2><p class="sm">Odometer: ${odo?esc(odo)+' km':'not logged'}</p><p class="sm">Receipts saved: ${receipts.length}</p><p class="sm">To-dos done: ${todos.filter(t=>t.done).length}</p></section>
-<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 24 Nov, 8:30pm</p>`}
+<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 25 Nov, 7pm</p>`}
 
 const VIEWS={quit:vQuit,replies:vReplies,bills:vBills,docs:vDocs,wo:vWo,meals:vMeals,hist:vHist,today:vToday,cal:vCal,health:vHealth,todo:vTodo,more:vMore,swing:vSwing,study:vStudy,car:vCar,nums:vNums,deliv:vDeliv,rec:vRec,money:vMoney};
 const TABS=[['today','Today','home'],['cal','Calendar','cal'],['health','Health','heart'],['todo','To-do','list'],['more','More','more']];
@@ -338,6 +365,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button,[data-go]
   if(d.replied){const id=d.replied;if(id.startsWith('r_')){seen[id]=1;S.set('seen',seen)}else{replies.forEach(r=>{if(String(r.id)===id)r.done=1})};save2();render()}
   else if(d.rest){rest[d.rest]=rest[d.rest]?0:1;save2();render()}
   else if(d.act==='slip'){if(confirm('Restart your count from now? Your best run is kept.')){const h=qParts()[4];quit.best=Math.max(quit.best||0,h);quit.slips.push(Date.now());quit.start=Date.now();saveQ();render()}}
+  else if(d.clrbill){const r=RECUR.find(x=>x.id===d.clrbill);billDates[d.clrbill]='';S.set('billDates',billDates);render()}
   else if(d.paid){paidB[d.paid]=1;save2();render()}
   else if(d.wopick){woDay=d.wopick;render();scrollTo(0,0)}
   else if(d.wodayReset){woDay=key(today);render()}
@@ -374,6 +402,7 @@ document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,fd=ne
   if(k==='odo'){odo=String(fd.get('o')||'').replace(/\D/g,'')}
   if(k==='rec'){const p=fd.get('p');receipts.push({w:fd.get('w'),a:fd.get('a'),c:fd.get('c'),d:Date.now(),p:p&&p.name?p.name:''})}
   if(k==='quit'){const v=fd.get('t');const t=v?new Date(v).getTime():Date.now();quit.start=Math.min(t,Date.now());saveQ()}
+  if(k==='billdate'){const v=fd.get('d');if(v){billDates[f.dataset.id]=v;S.set('billDates',billDates)}}
   if(k==='reply'){replies.push({id:Date.now(),who:fd.get('who'),via:fd.get('via'),note:fd.get('note')||''})}
   if(k==='meal'){const t=(fd.get('t')||'').trim();if(t)meals[f.dataset.k].push({t})}
   if(k==='ask'){const q=(fd.get('q')||'').trim();if(q){f.reset();location.href='https://claude.ai/new?q='+encodeURIComponent('[From my life app] '+q)}return}
