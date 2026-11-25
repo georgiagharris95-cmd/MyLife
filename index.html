@@ -155,9 +155,7 @@ return `<section class="card" style="background:var(--skyL)"><div class="between
 {id:'nib',n:'Health insurance (nib)',amt:77.36,f:'monthly',next:'2026-12-16',src:'Mid-month, last $77.36 on 16 Nov (it varies a bit)'},
 {id:'gym',n:'Gym (Plus Fitness)',amt:29.90,f:'fortnightly',next:'2026-11-30',src:'Every second Monday, last 16 Nov'},
 {id:'claude',n:'Claude',amt:34,f:'monthly',next:'2026-12-25',src:'Last went through around 25 Nov'},
-{id:'netflix',n:'Netflix',amt:20.99,f:'monthly',next:'2026-12-21',src:'Around the 20th to 22nd'},
-{id:'skool',n:'Skool membership',amt:85,f:'monthly',next:'2026-12-06',src:'USD charge around the 6th, plus a ~$3 overseas fee'},
-{id:'prime',n:'Amazon Prime',amt:9.99,f:'monthly',next:'2026-11-26',src:'Around the 24th to 26th, on the NAB card'},
+{id:'netflix',n:'Netflix',amt:9.99,f:'monthly',next:'2026-12-21',src:'Around the 20th to 22nd'},
 {id:'rego',n:'Car rego',amt:1072.85,f:'yearly',next:'2027-07-02',src:''}
 ];/*RECUR-END*/
 let billDates=S.get('billDates',{});
@@ -334,6 +332,12 @@ function vRec(){return `<button class="back" data-tab="more">‹ Back</button><h
   <section class="card"><div class="between"><h2>This financial year</h2><b>$${receipts.reduce((s,r)=>s+(+r.a||0),0).toFixed(2)}</b></div>${receipts.length?receipts.slice().reverse().map(r=>`<div class="between"><div><p style="font-weight:700">${esc(r.w)}</p><p class="mut sm">${r.c} · ${fmt(new Date(r.d))}${r.p?' · photo: '+esc(r.p):''}</p></div><b>$${(+r.a||0).toFixed(2)}</b></div>`).join(''):'<p class="mut">No receipts yet.</p>'}<p class="mut sm">Your accountant can tell you what's claimable.</p></section>`}
 const BUD={pay:6025,bills:[['Rent',800,'Fortnightly',800],['Car loan (PowerTorque)',1100,'Monthly',507.69],['Car insurance (RAC)',206.48,'Monthly',95.30],['Car rego',1072.85,'Yearly',41.26],['Health insurance (nib)',82,'Monthly',37.85],['Phone plan (Telstra)',75.60,'Monthly',34.89],['iPhone + Watch (Telstra)',88.31,'Monthly',40.76],['Power (Synergy, your half)',92.50,'Every 2 months',21.35],['Gym',14.95,'Weekly',29.90],['Claude',34,'Monthly',15.69],['Apple Music + iCloud',22.98,'Monthly',10.61],['Netflix',9.99,'Monthly',4.61]],
 every:[['One-offs & everything else',861],['Shopping & clothes',486],['Beauty, health & self-care',221],['Groceries',158],['Fuel',137],['Trips & overseas',131],['Cash out',108],['Eating out & coffee',90],['Card interest & fees',75],['Parking',22],['Fun & events',12]],save:[['Car servicing & tyres',50]]};
+
+let card=S.get('card',{hist:[],pp:500});
+function cardCard(){const $=v=>"$"+Math.round(v).toLocaleString("en-AU");const h=card.hist,cur=h.length?h[h.length-1].b:null,start=h.length?h[0].b:null;const r=0.2249/12;let mths=null,intr=0;if(cur){let b=cur,m=0;const pm=card.pp*26/12;while(b>0&&m<240){const i=b*r;intr+=i;b=b+i-pm;m++}mths=b>0?null:m}
+const paid=start&&cur?Math.max(0,start-cur):0;const pct=start?Math.min(100,paid/start*100):0;
+return `<section class="card" style="background:var(--coralL)"><h2>Pay off the credit card</h2>${cur?`<div class="between"><p style="font-family:Outfit;font-weight:800;font-size:28px">${$(cur)}</p><span class="sm mut">updated ${fmt(new Date(h[h.length-1].d+'T00:00'))}</span></div><div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--mint)"></div></div><p class="sm">${paid?`You've knocked off <b>${$(paid)}</b> since ${fmt(new Date(h[0].d+'T00:00'))}. 🎉`:'Starting point saved. Update it after each payment to watch it drop.'}</p><p class="sm">Interest right now: about <b>${$(Math.round(cur*r))} a month</b>.</p><p class="sm">At <b>${$(card.pp)} a pay</b>, it's gone in about <b>${mths?mths+' months':'never (raise the amount)'}</b>${mths?`, costing about ${$(Math.round(intr))} more in interest`:''}.</p>`:'<p class="sm">Pop in the current balance to start tracking.</p>'}
+<form data-form="card" class="row" style="gap:6px;margin-top:6px"><input class="inp" name="b" type="number" step="0.01" inputmode="decimal" placeholder="Balance now $" aria-label="Card balance now" style="flex:1"><input class="inp" name="pp" type="number" inputmode="decimal" value="${card.pp}" aria-label="Paying each pay" style="width:90px"><button class="btn sm">Save</button></form><p class="mut sm">Left box: balance now. Right box: what you'll pay each pay. Only saved on your phone.</p></section>`}
 function vMoney(){const P=D(2026,12,2);let np=new Date(P);while(diff(today,np)<0)np=addD(np,14);while(diff(today,addD(np,-14))>=0)np=addD(np,-14);const dl=diff(today,np);
   const sum=a=>a.reduce((t,x)=>t+x,0);const PF={weekly:2,fortnightly:1,monthly:12/26,'2-monthly':6/26,quarterly:4/26,yearly:1/26};const RB=allRecur().filter(r=>r.amt).map(r=>[r.n,r.amt,r.f,Math.round(r.amt*PF[r.f]*100)/100]);const bills=sum(RB.map(b=>b[3])),every=sum(BUD.every.map(b=>b[1])),sv=sum(BUD.save.map(b=>b[1]));
   const extraCar=diff(D(2027,2,10),today)>=0?250:0;const spare=BUD.pay-bills-every-sv-extraCar;
@@ -344,7 +348,7 @@ function vMoney(){const P=D(2026,12,2);let np=new Date(P);while(diff(today,np)<0
   <section class="card" style="background:var(--mint);color:#08291D"><p class="sm">Next pay · ${fmt(np,{weekday:'long',day:'numeric',month:'short'})}${dl===0?' · today!':` · ${dl} day${dl>1?'s':''} to go`}</p><h2 style="font-size:34px">${$(BUD.pay)}</h2><p class="sm">take-home every second Wednesday (about $2,870 tax)</p></section>
   <section class="card"><h2>Each pay</h2>${row('Take-home',$(BUD.pay))}${row('Bills & subscriptions','− '+$(bills))}${row('Everyday spending','− '+$(every))}${row('Saving up (car servicing)','− '+$(sv))}${extraCar?row('Extra car loan payment','− $250'):''}<div style="border-top:2px solid var(--line)"></div>${row('Spare',$(spare),1)}
 </section>
-  <section class="card"><h2>Goals</h2><p class="mut">Nothing here yet. Add your goals when you're ready.</p></section>
+  ${cardCard()}<section class="card"><h2>Goals</h2><p class="mut">Nothing here yet. Add your goals when you're ready.</p></section>
 
   <section class="card"><h2>Coming up</h2>
   ${row('Wed 16 Dec','Christmas $800')}${row('30 Dec – 24 Feb','Philippines $1,000 a pay')}${row('Wed 13 Jan','May be a short pay')}</section>
@@ -354,7 +358,7 @@ function vMoney(){const P=D(2026,12,2);let np=new Date(P);while(diff(today,np)<0
   <a class="btn ghost" href="https://claude.ai/artifact/XZbr7j8Fisk3Faxf4C5i2f">Open the full Budget &amp; House Plan</a>`}
 
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen','replies','energy','wo','meals','rest','paidB','quit','billDates','billCustom','placeCustom','packList','leaveList'].forEach(k=>o[k]=S.get(k,null));return o}
+function backup(){const o={app:'georgia-life',exported:new Date().toISOString()};['meds','prn','todos','units','rr','packed','leave','odo','cycle','receipts','ear','started','wxloc','seen','replies','energy','wo','meals','rest','paidB','quit','billDates','billCustom','placeCustom','packList','leaveList','card'].forEach(k=>o[k]=S.get(k,null));return o}
 function csvRows(){const r=[['Date','Type','Item','Detail']];Object.keys(log).sort().forEach(d=>Object.keys(log[d]).forEach(id=>{if(log[d][id]){const m=MEDS.find(x=>x.id===id);r.push([d,'Medication',m?m.n:id,m?m.dose:''])}}));prn.forEach(x=>r.push([String(x).slice(0,10),'Medication','Tirzepatide','3 mg (as needed)']));cycle.forEach(d=>r.push([d,'Cycle','Period start','']));todos.filter(t=>t.done).forEach(t=>r.push(['','To-do done',t.t||t.text||'','']));receipts.forEach(x=>r.push([x.d||'','Receipt',x.n||x.t||'',x.a||'']));if(odo)r.push([key(today),'Car','Odometer',odo+' km']);return r.map(a=>a.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n')}
 async function shareFile(name,type,text){const f=new File([text],name,{type});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}catch(e){if(e.name==='AbortError')return}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function vHist(){const days=Object.keys(log).filter(d=>Object.values(log[d]).some(Boolean)).sort().reverse();
@@ -363,7 +367,7 @@ return `<button class="back" data-tab="more">‹ Back</button><h1>History &amp; 
 <section class="card"><h2>Medications</h2>${days.length?days.slice(0,60).map(d=>`<div class="between"><span class="sm" style="font-weight:700">${fmt(new Date(d+'T00:00'))}</span><span class="sm">${Object.keys(log[d]).filter(i=>log[d][i]).map(i=>(MEDS.find(m=>m.id===i)||{n:i}).n.split(' ')[0]).join(', ')}</span></div>`).join(''):'<p class="mut">Nothing ticked yet.</p>'}${prn.length?`<p class="sm" style="font-weight:700;margin-top:8px">Tirzepatide doses</p>${prn.slice().reverse().map(x=>`<p class="sm">${esc(String(x).slice(0,16).replace('T',' '))}</p>`).join('')}`:''}</section>
 <section class="card"><h2>Period starts</h2>${cycle.slice().reverse().map(d=>`<p class="sm">${fmt(new Date(d+'T00:00'))} ${new Date(d).getFullYear()}</p>`).join('')}</section>
 <section class="card"><h2>Other</h2><p class="sm">Odometer: ${odo?esc(odo)+' km':'not logged'}</p><p class="sm">Receipts saved: ${receipts.length}</p><p class="sm">To-dos done: ${todos.filter(t=>t.done).length}</p></section>
-<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 25 Nov, 8:45pm</p>`}
+<p class="mut sm">Everything lives on your iPhone only, inside this home-screen app. Nothing is sent anywhere unless you export it.</p><p class="mut sm">App version 25 Nov, 9pm</p>`}
 
 const VIEWS={quit:vQuit,replies:vReplies,bills:vBills,docs:vDocs,wo:vWo,meals:vMeals,hist:vHist,today:vToday,cal:vCal,health:vHealth,todo:vTodo,more:vMore,swing:vSwing,study:vStudy,car:vCar,nums:vNums,deliv:vDeliv,rec:vRec,money:vMoney};
 const TABS=[['today','Today','home'],['cal','Calendar','cal'],['health','Health','heart'],['todo','To-do','list'],['more','More','more']];
@@ -424,6 +428,7 @@ document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,fd=ne
   if(k==='billedit'){const id=f.dataset.id||('u'+Date.now());const a=fd.get('amt');billCustom[id]={...(billCustom[id]||{}),n:fd.get('n'),amt:a===''?null:+a,f:fd.get('f'),manual:fd.get('m')?1:0};if(!f.dataset.id)billCustom[id].next='';const d=fd.get('d');billDates[id]=d||'';S.set('billCustom',billCustom);S.set('billDates',billDates);closeSheet()}
   if(k==='placeedit'){const id=f.dataset.id||('u'+Date.now());placeCustom[id]={...(placeCustom[id]||{}),n:fd.get('n'),s:fd.get('s'),t:fd.get('t'),a:fd.get('a')};S.set('placeCustom',placeCustom);closeSheet()}
   if(k==='packadd'){const t=(fd.get('t')||'').trim();if(t){if(f.dataset.k==='pack'){packList=[...(packList||PACK),t];S.set('packList',packList)}else{leaveList=[...(leaveList||LEAVE),t];S.set('leaveList',leaveList)}}}
+  if(k==='card'){const b=fd.get('b'),pp=fd.get('pp');if(pp)card.pp=+pp;if(b){card.hist.push({d:key(today),b:+b})}S.set('card',card)}
   if(k==='billdate'){const v=fd.get('d');if(v){billDates[f.dataset.id]=v;S.set('billDates',billDates)}}
   if(k==='reply'){replies.push({id:Date.now(),who:fd.get('who'),via:fd.get('via'),note:fd.get('note')||''})}
   if(k==='meal'){const t=(fd.get('t')||'').trim();if(t)meals[f.dataset.k].push({t})}
