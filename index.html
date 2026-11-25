@@ -146,7 +146,7 @@ function mailCard(){const n=MAIL.items.filter(m=>!seen[m.id]);if(!n.length)retur
 return `<section class="card" style="background:var(--skyL)"><div class="between"><h2>Heads up · ${n.length}</h2><span class="mut sm">Checked ${MAIL.updated}</span></div>${n.map(m=>`<div class="row" style="align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)"><div class="grow"><p class="sm mut">${esc(m.from)}</p><p style="font-weight:700">${esc(m.t)}</p><p class="sm">${esc(m.l)}</p><div class="row" style="gap:8px;margin-top:6px">${m.url&&m.url.startsWith('https://')?`<a class="btn ghost sm" target="_blank" href="${m.url}">Open email</a>`:''}${m.tel?telA(m.tel,'var(--card)'):''}</div></div><button class="btn" style="flex:none" data-seen="${esc(m.id)}" aria-label="Mark as seen">✓</button></div>`).join('')}</section>`}
 /*RECUR-START*/const RECUR=[
 {id:'rent',n:'Rent (Deft Real Estate)',amt:800,f:'fortnightly',next:'2026-12-09',src:'Last came out Wed 25 Nov'},
-{id:'xfer',n:'Weekly transfer out (Mondays)',amt:null,f:'weekly',next:'2026-11-30',src:'Seen 16 and 23 Nov'},
+{id:'xfer',n:'Shared account (weekly)',amt:50,f:'weekly',next:'2026-11-30',src:'Every Monday'},
 {id:'telstra',n:'Telstra phone + iPhone/Watch',amt:163.91,f:'monthly',next:'2026-11-30',src:'Bill arrives on the 30th',manual:1},
 {id:'apple',n:'Apple Music + iCloud',amt:22.98,f:'monthly',next:'2026-12-04',src:'Around the 4th'},
 {id:'synergy',n:'Power (Synergy, your half)',amt:92.50,f:'2-monthly',next:'2027-01-16',src:'Bill arrives around the 16th'},
